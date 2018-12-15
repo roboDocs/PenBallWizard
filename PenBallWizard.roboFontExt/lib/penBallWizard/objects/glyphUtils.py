@@ -1,8 +1,10 @@
-from robofab.world import RGlyph
-from robofab.pens.reverseContourPointPen import ReverseContourPointPen
+from fontParts.fontshell import RGlyph
+from fontTools.pens.pointPen import ReverseContourPointPen
+
 
 def passThrough(glyph):
     return glyph
+
 
 def copyContours(glyph):
     glyphCopy = RGlyph()
@@ -13,6 +15,7 @@ def copyContours(glyph):
     glyphCopy.name = glyph.name
     return glyphCopy
 
+
 def reverseContours(glyph):
     glyphCopy = RGlyph()
     glyphCopy.width = glyph.width
@@ -20,6 +23,7 @@ def reverseContours(glyph):
     reversePen = ReverseContourPointPen(pointPen)
     glyph.drawPoints(reversePen)
     return glyphCopy
+
 
 def removeOverlap(glyph):
     glyphCopy = RGlyph()

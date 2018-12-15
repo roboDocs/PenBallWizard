@@ -1,14 +1,16 @@
 from fontTools.pens.basePen import BasePen
-from ufoLib.pointPen import AbstractPointPen # from robofab.pens.pointPen import AbstractPointPen
+from fontTools.pens.pointPen import AbstractPointPen  # from robofab.pens.pointPen import AbstractPointPen
+
 
 def calcArea(points):
     l = len(points)
     area = 0
-    for i in xrange(l):
+    for i in range(l):
         x1, y1 = points[i]
-        x2, y2 = points[(i+1)%l]
-        area += (x1*y2)-(x2*y1)
+        x2, y2 = points[(i + 1) % l]
+        area += (x1 * y2) - (x2 * y1)
     return area / 2
+
 
 class FilterPointPen(AbstractPointPen):
 
@@ -17,7 +19,7 @@ class FilterPointPen(AbstractPointPen):
         self.contours = []
         self.components = []
 
-    def beginPath(self):
+    def beginPath(self, identifier=None):
         self.currentContour = []
 
     def addPoint(self, pt, segmentType=None, smooth=False, name=None, *args, **kwargs):
@@ -34,7 +36,7 @@ class FilterPointPen(AbstractPointPen):
         if abs(area) >= 25:
             self.contours.append(self.currentContour)
 
-    def addComponent(self, baseGlyphName, transformation):
+    def addComponent(self, baseGlyphName, transformation, identifier=None):
         self.components.append((baseGlyphName, transformation))
 
     def extract(self, pointPen):
@@ -45,7 +47,6 @@ class FilterPointPen(AbstractPointPen):
             for point in contour:
                 pointPen.addPoint(**point)
             pointPen.endPath()
-
 
 
 class CollectComponentsPen(BasePen):
@@ -63,7 +64,6 @@ class CollectComponentsPen(BasePen):
 
     def get(self):
         return self.components
-
 
 
 class CounterPen(BasePen):

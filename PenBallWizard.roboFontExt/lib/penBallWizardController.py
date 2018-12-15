@@ -1,13 +1,12 @@
-#coding=utf-8
 __version__ = 0.7
 
 import os
 import sys
-from collections import OrderedDict
 
 from AppKit import NSMenuItem
 
-from fontParts.fontshell import RFont # from robofab.world import RFont
+from fontParts.world import RFont
+
 from defconAppKit.tools.textSplitter import splitText
 from vanilla import *
 from vanilla.dialogs import getFile, message
@@ -15,19 +14,16 @@ from mojo.UI import MultiLineView
 from mojo.extensions import getExtensionDefault, setExtensionDefault
 from mojo.events import addObserver, removeObserver, postEvent
 
-from importlib import reload
-import penBallWizard.objects.penBallFilters
-reload(penBallWizard.objects.penBallFilters)
 from penBallWizard.objects.penBallFilters import PenBallFiltersManager
 
-dynamicParametersLibFolder = os.path.join(os.path.join(os.getcwd(), 'dynamicParameters'), 'lib')
-if not dynamicParametersLibFolder in sys.path:
+dynamicParametersLibFolder = os.path.join(os.path.dirname(__file__), 'dynamicParameters', 'lib')
+if dynamicParametersLibFolder not in sys.path:
     sys.path.insert(0, dynamicParametersLibFolder)
 
 from dynamicParameters.vanillaParameterObjects import ParameterSliderTextInput, VanillaSingleValueParameter
 
 # LOCALPATH = '/'.join(__file__.split('/')[:-1])
-# JSONFILE = 'filters.json'
+# JSONFILE = 'filters.json'Æ
 PENBALLWIZARD_EXTENSIONKEY = 'com.loicsander.penBallWizard'
 
 
@@ -89,9 +85,9 @@ class PenBallWizardController(object):
         self.w.displaySettings.getNSPopUpButton().setBordered_(False)
         self.w.preview = MultiLineView((300, 22, -0, -0))
         displayStates = self.w.preview.getDisplayStates()
-        for key in ['Show Metrics','Upside Down','Stroke','Beam','Inverse','Water Fall','Multi Line']:
+        for key in ['Show Metrics', 'Upside Down', 'Stroke', 'Beam', 'Inverse', 'Water Fall', 'Multi Line']:
             displayStates[key] = False
-        for key in ['Fill','Single Line']:
+        for key in ['Fill', 'Single Line']:
             displayStates[key] = True
         self.w.preview.setDisplayStates(displayStates)
 
@@ -110,7 +106,8 @@ class PenBallWizardController(object):
         self.setDisplayOption(selection, name, state)
 
     def setDisplayOption(self, index, name, value):
-        if '✓' in name: name = name[2:]
+        if '✓' in name:
+            name = name[2:]
         self.displaySettingsRecord[index] = (name if value is True else '{0} {1}'.format('✓', name), not value)
         displayStates = self.w.preview.getDisplayStates()
         if name in ['Fill', 'Stroke', 'Inverse']:
@@ -243,12 +240,10 @@ class PenBallWizardController(object):
 
             gap = 5
             height = gap
-            end = 0
             lineheight = 27
             top = 35
-            boxes = 0
 
-            for j, (filterName, arguments)  in enumerate(argumentBlocks):
+            for j, (filterName, arguments) in enumerate(argumentBlocks):
                 if len(arguments) > 0:
                     blockfilterName = '{0}{1}'.format(filterName, j)
                     setattr(self.w.filtersPanel.controls, blockfilterName, Box((5, 5, 0, 0)))
@@ -275,16 +270,17 @@ class PenBallWizardController(object):
                             argumentName = arg
 
                         limits = currentFilter.getLimits(argumentName)
-                        if limits is None: limits = (0, 100)
+                        if limits is None:
+                            limits = (0, 100)
 
                         if isinstance(value, bool):
-                            setattr(block, arg, CheckBox((8, top + (i*lineheight), -8, 22), arg, value=value, callback=self.setArgumentValue, sizeStyle='small'))
+                            setattr(block, arg, CheckBox((8, top + (i * lineheight), -8, 22), arg, value=value, callback=self.setArgumentValue, sizeStyle='small'))
                             valueType = 'bool'
                         elif isinstance(value, str):
-                            setattr(block, arg, EditText((8, top + (i*lineheight), -8, 22), value, callback=self.setArgumentValue, sizeStyle='small'))
+                            setattr(block, arg, EditText((8, top + (i * lineheight), -8, 22), value, callback=self.setArgumentValue, sizeStyle='small'))
                         elif isinstance(value, (int, float)):
                             parameter = VanillaSingleValueParameter(arg, value, limits=limits)
-                            setattr(block, arg, ParameterSliderTextInput(parameter, (8, top + (i*lineheight), -8, 22), title=arg, callback=self.setArgumentValue))
+                            setattr(block, arg, ParameterSliderTextInput(parameter, (8, top + (i * lineheight), -8, 22), title=arg, callback=self.setArgumentValue))
 
                         control = getattr(block, arg)
                         control.name = argumentName
@@ -322,7 +318,7 @@ class PenBallWizardController(object):
         self.generationSheet = Sheet((0, 0, 400, 140), self.w)
         self.generationSheet.inner = Group((15, 20, -15, -15))
         self.generationSheet.inner.fontChoiceTitle = TextBox((0, 0, 100, 22), 'Destination Font')
-        self.generationSheet.inner.fontChoice = PopUpButton((110, 0, -0, 22), ['New font']+[makeListFontName(font) for font in AllFonts()])
+        self.generationSheet.inner.fontChoice = PopUpButton((110, 0, -0, 22), ['New font'] + [makeListFontName(font) for font in AllFonts()])
         self.generationSheet.inner.layerNameTitle = TextBox((0, 35, 100, 22), 'Layer name')
         self.generationSheet.inner.layerName = EditText((110, 35, -0, 22), '')
 
@@ -339,7 +335,8 @@ class PenBallWizardController(object):
             familyName, styleName = selectedFontName.split(' > ')
             font = AllFonts().getFontsByFamilyNameStyleName(familyName, styleName)
         layerName = self.generationSheet.inner.layerName.get()
-        if len(layerName) == 0: layerName = None
+        if len(layerName) == 0:
+            layerName = None
         self.generationSheet.close()
         self.generateGlyphsToFont(font, layerName)
 
@@ -355,7 +352,7 @@ class PenBallWizardController(object):
             filterDict = self.filters[filterName].getFilterDict()
             for key in filterDict:
                 if key == "arguments":
-                    entry = OrderedDict(filterDict[key])
+                    entry = dict(filterDict[key])
                 else:
                     entry = filterDict[key]
                 sheetFields[key] = entry
@@ -372,7 +369,7 @@ class PenBallWizardController(object):
         self.filterSheet.name = EditText((125, y, -15, 22), filterName)
         y += 22
 
-        tabs = ['module','file']
+        tabs = ['module', 'file']
         selectedTab = 0 if len(sheetFields['module']) >= len(sheetFields['file']) else 1
         filterObjectName = sheetFields['filterObjectName']
 
@@ -394,10 +391,10 @@ class PenBallWizardController(object):
 
         y += 20
         columns = [
-            {'title': 'argument', 'width': 160, 'editable':True},
-            {'title': 'value', 'width': 71, 'editable':True},
-            {'title': 'min', 'width': 49, 'editable':True},
-            {'title': 'max', 'width': 49, 'editable':True}
+            {'title': 'argument', 'width': 160, 'editable': True},
+            {'title': 'value', 'width': 71, 'editable': True},
+            {'title': 'min', 'width': 49, 'editable': True},
+            {'title': 'max', 'width': 49, 'editable': True}
         ]
 
         arguments = sheetFields['arguments']
@@ -413,7 +410,7 @@ class PenBallWizardController(object):
             argItem = {
                 'argument': key,
                 'value': value
-                }
+            }
             if key in limits:
                 minimum, maximum = sheetFields['limits'][key]
                 argItem['min'] = minimum
@@ -424,8 +421,8 @@ class PenBallWizardController(object):
         buttonSize = 20
         gutter = 7
         self.filterSheet.arguments = List((15 + buttonSize + gutter, y, -15, -52), argumentItems, columnDescriptions=columns, allowsMultipleSelection=False, allowsEmptySelection=False)
-        self.filterSheet.addArgument = SquareButton((15, -52-(buttonSize*2)-gutter, buttonSize, buttonSize), '+', sizeStyle='small', callback=self.addArgument)
-        self.filterSheet.removeArgument = SquareButton((15, -52-buttonSize, buttonSize, buttonSize), '-', sizeStyle='small', callback=self.removeArgument)
+        self.filterSheet.addArgument = SquareButton((15, -52 - (buttonSize * 2) - gutter, buttonSize, buttonSize), '+', sizeStyle='small', callback=self.addArgument)
+        self.filterSheet.removeArgument = SquareButton((15, -52 - buttonSize, buttonSize, buttonSize), '-', sizeStyle='small', callback=self.removeArgument)
         if len(argumentItems) == 0:
             self.filterSheet.removeArgument.enable(False)
 
@@ -460,8 +457,8 @@ class PenBallWizardController(object):
 
         y += 20
         self.filterSheet.subfilters = List((15 + buttonSize + gutter, y, -15, -52), subfilterItems, columnDescriptions=columns, allowsMultipleSelection=False, allowsEmptySelection=False)
-        self.filterSheet.addSubfilter = SquareButton((15, -52-(buttonSize*2)-gutter, buttonSize, buttonSize), '+', sizeStyle='small', callback=self.addSubfilter)
-        self.filterSheet.removeSubfilter = SquareButton((15, -52-buttonSize, buttonSize, buttonSize), '-', sizeStyle='small', callback=self.removeSubfilter)
+        self.filterSheet.addSubfilter = SquareButton((15, -52 - (buttonSize * 2) - gutter, buttonSize, buttonSize), '+', sizeStyle='small', callback=self.addSubfilter)
+        self.filterSheet.removeSubfilter = SquareButton((15, -52 - buttonSize, buttonSize, buttonSize), '-', sizeStyle='small', callback=self.removeSubfilter)
         if len(subfilters) == 0:
             self.filterSheet.removeSubfilter.enable(False)
         y += 75
@@ -513,25 +510,25 @@ class PenBallWizardController(object):
             selection = self.filterSheet.subfilters.getSelection()[0]
             if selection > 0:
                 itemToMove = subfiltersList.pop(selection)
-                subfiltersList.insert(selection-1, itemToMove)
+                subfiltersList.insert(selection - 1, itemToMove)
                 self.filterSheet.subfilters.set(subfiltersList)
                 if not self.filterSheet.new:
-                    self.filters[self.currentFilterName].reorderSubfilters(selection, selection-1)
+                    self.filters[self.currentFilterName].reorderSubfilters(selection, selection - 1)
 
     def moveSubfilterDown(self, sender):
         subfiltersList = self.filterSheet.subfilters.get()
         nItems = len(subfiltersList)
         if nItems > 1:
             selection = self.filterSheet.subfilters.getSelection()[0]
-            if selection < nItems-1:
+            if selection < nItems - 1:
                 itemToMove = subfiltersList.pop(selection)
-                subfiltersList.insert(selection+1, itemToMove)
+                subfiltersList.insert(selection + 1, itemToMove)
                 self.filterSheet.subfilters.set(subfiltersList)
                 if not self.filterSheet.new:
-                    self.filters[self.currentFilterName].reorderSubfilters(selection, selection+1)
+                    self.filters[self.currentFilterName].reorderSubfilters(selection, selection + 1)
 
     def getFile(self, sender):
-        path = getFile(fileTypes=['py'], allowsMultipleSelection=False, resultCallback=self.loadFilePath, parentWindow=self.filterSheet)
+        return getFile(fileTypes=['py'], allowsMultipleSelection=False, resultCallback=self.loadFilePath, parentWindow=self.filterSheet)
 
     def loadFilePath(self, paths):
         path = paths[0]
@@ -549,7 +546,7 @@ class PenBallWizardController(object):
 
         if len(filterName) > 0:
             sourceIndex = self.filterSheet.importPath.get()
-            mode = ['module','file'][sourceIndex]
+            mode = ['module', 'file'][sourceIndex]
             importString = self.filterSheet.importPath[sourceIndex].pathInput.get()
 
             if len(importString) > 0:
@@ -566,7 +563,7 @@ class PenBallWizardController(object):
                             if 'value' in argItem:
                                 value = self.parseValue(argItem['value'])
                                 if 'arguments' not in filterDict:
-                                    filterDict['arguments'] = OrderedDict()
+                                    filterDict['arguments'] = dict()
                                 filterDict['arguments'][key] = value
                                 if 'min' in argItem and 'max' in argItem and isinstance(value, (float, int)):
                                     try:
@@ -574,18 +571,18 @@ class PenBallWizardController(object):
                                         if 'limits' not in filterDict:
                                             filterDict['limits'] = {}
                                         filterDict['limits'][key] = (mini, maxi)
-                                    except:
+                                    except Exception:
                                         pass
 
                     if filterName in self.filters:
                         self.filters.setFilter(filterName, filterDict)
 
-                    elif self.filterSheet.new == False:
+                    elif self.filterSheet.new is False:
                         index = self.filterSheet.index
                         self.filters.changeFilterNameByIndex(index, filterName)
                         self.filters.setFilter(filterName, filterDict)
 
-                    elif self.filterSheet.new == True:
+                    elif self.filterSheet.new is True:
                         self.filters.setFilter(filterName, filterDict)
 
                     self.closeFilterSheet(sender)
@@ -608,7 +605,7 @@ class PenBallWizardController(object):
             source = item['source'] if 'source' in item else None
             try:
                 source = int(source)
-            except:
+            except Exception:
                 pass
             subfilters.append((subfilterName, mode, source))
 
@@ -671,7 +668,7 @@ class PenBallWizardController(object):
         elif value is not '' or value is not None:
             try:
                 value = float(value)
-            except:
+            except Exception:
                 pass
         return value
 
@@ -679,7 +676,7 @@ class PenBallWizardController(object):
         currentFont = self.currentFont
         self.cachedFont = RFont(showInterface=False)
         if currentFont is not None:
-            for metric in ['ascender','descender','unitsPerEm']:
+            for metric in ['ascender', 'descender', 'unitsPerEm']:
                 setattr(self.cachedFont.info, metric, getattr(currentFont.info, metric))
 
     def fontChanged(self, notification):
@@ -707,14 +704,11 @@ class PenBallWizardController(object):
         setExtensionDefault('{0}.filtersList'.format(PENBALLWIZARD_EXTENSIONKEY), self.filters.asList())
 
     def end(self, notification):
-        #self.filters.saveFiltersToJSON('/'.join([LOCALPATH, JSONFILE]))
+        # self.filters.saveFiltersToJSON('/'.join([LOCALPATH, JSONFILE]))
         self.saveFiltersToExtensionDefault()
         self.releaseObservedGlyphs()
         for callback, event in self.observers:
             removeObserver(self, event)
 
+
 PenBallWizardController()
-
-# if __name__ == '__main__':
-
-#     import unittest

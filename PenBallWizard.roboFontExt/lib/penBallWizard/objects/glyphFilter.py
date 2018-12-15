@@ -1,12 +1,10 @@
- #coding=utf-8
-import json
 import inspect
 
-from fontTools.pens.basePen import BasePen
-from fontParts.fontshell import RGlyph # from robofab.world import RGlyph
+from fontParts.world import RGlyph  # from robofab.world import RGlyph
 
-from errorGlyph import ErrorGlyph
-from penUtils import FilterPointPen, CollectComponentsPen
+from .errorGlyph import ErrorGlyph
+from .penUtils import FilterPointPen, CollectComponentsPen
+
 
 class GlyphFilter(object):
     """
@@ -23,12 +21,7 @@ class GlyphFilter(object):
         self.filterArguments = filterArguments
         self.ignoreComponents = ignoreComponents
 
-
     def __call__(self, glyph, font=None, **arguments):
-        filterObject = self.filterObject
-        filterArguments = self.filterArguments
-        validArguments = {argumentName: argumentValue for argumentName, argumentValue in arguments.items() if argumentName in filterArguments}
-
         outputGlyph = self.processGlyph(glyph, font=font, **arguments)
 
         if outputGlyph.name != '_error_':
@@ -40,7 +33,6 @@ class GlyphFilter(object):
             outputGlyph = ErrorGlyph('none')
 
         return outputGlyph
-
 
     def processGlyph(self, glyph, font, **arguments):
         filterObject = self.filterObject
@@ -54,7 +46,6 @@ class GlyphFilter(object):
 
             except Exception as e:
                 print('PenBallWizard — GlyphFilter: Error (function): {0}'.format(e))
-                error = True
                 filteredGlyph = ErrorGlyph()
         else:
             try:
@@ -66,7 +57,6 @@ class GlyphFilter(object):
 
             except Exception as e:
                 print('PenBallWizard — GlyphFilter: Error (pen): {0}'.format(e))
-                error = True
                 filteredGlyph = ErrorGlyph()
 
         for baseGlyphName, transformation in components:
@@ -78,7 +68,6 @@ class GlyphFilter(object):
             filteredGlyph.appendAnchor(*anchor)
 
         return filteredGlyph
-
 
     def normalizeGlyph(self, glyph):
         componentsCollector = CollectComponentsPen()
@@ -93,7 +82,6 @@ class GlyphFilter(object):
 
         return cleanGlyph, components, anchors
 
-
     def getCleanedGlyph(self, glyph):
         cleanGlyph = RGlyph()
         cleanGlyph.width = glyph.width
@@ -102,8 +90,6 @@ class GlyphFilter(object):
         glyph.drawPoints(cleanPen)
         cleanPen.extract(pen)
         return cleanGlyph
-
-
 
 
 if __name__ == '__main__':

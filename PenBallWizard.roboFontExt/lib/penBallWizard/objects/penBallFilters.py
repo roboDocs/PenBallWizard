@@ -1,27 +1,16 @@
-#coding=utf-8
 from __future__ import print_function
 import sys
 import imp
 import json
-from collections import OrderedDict
 
-from mojo.roboFont import RGlyph
-from defcon import addRepresentationFactory, removeRepresentationFactory
+from fontParts.world import RGlyph
+from defcon import registerRepresentationFactory, unregisterRepresentationFactory, Glyph
 from booleanOperations.booleanGlyph import BooleanGlyph
 
-# import .errorGlyph
-# reload(.errorGlyph)
-# import .glyphFilter
-# reload(.glyphFilter)
-# import .glyphUtils
-# reload(.glyphUtils)
-# import .penUtils
-# reload(.penUtils)
-
-from errorGlyph import ErrorGlyph
-from glyphFilter import GlyphFilter
-from glyphUtils import passThrough, removeOverlap, reverseContours
-from penUtils import FilterPointPen
+from .errorGlyph import ErrorGlyph
+from .glyphFilter import GlyphFilter
+from .glyphUtils import passThrough, removeOverlap, reverseContours
+from .penUtils import FilterPointPen
 
 FACTORYKEYPREFIX = 'com.loicsander.glyphFilter.factory'
 FILTERARGSEPARATOR = '.'
@@ -34,15 +23,12 @@ def makeFilterKey(filterName):
 
 class PenBallBaseFilter(object):
 
-
     def __init__(self, filterName):
         self._name = filterName
         self.arguments = {}
 
-
     def __call__(self, glyph):
         return self.filterGlyph(glyph, self.arguments)
-
 
     def _get_index(self):
         assert self._parent is not None
@@ -54,33 +40,27 @@ class PenBallBaseFilter(object):
         key = makeFilterKey(self.name)
         return glyph.getRepresentation(key, **arguments)
 
-
     def _get_publicName(self):
         return self._name
-    name = property(_get_publicName, doc="Return the official filter name.")
 
+    name = property(_get_publicName, doc="Return the official filter name.")
 
     def _makeGlyphFilter(self):
         pass
 
-
     def hasArguments(self):
         return len(self.arguments) > 0
-
 
     def getArguments(self):
         return self.arguments.keys()
 
-
     def setArguments(self, arguments, keepExisting=False):
         for arg, value in arguments.items():
-            if keepExisting == False or (keepExisting == True and arg not in self.arguments):
+            if keepExisting is False or (keepExisting is True and arg not in self.arguments):
                 self.setArgumentValue(arg, value)
-
 
     def setArgumentValue(self, argumentName, argumentValue):
         self.arguments[argumentName] = argumentValue
-
 
     def getArgumentValue(self, argumentName):
         if argumentName in self.arguments:
@@ -88,30 +68,26 @@ class PenBallBaseFilter(object):
         else:
             raise KeyError(argumentName)
 
-
     def getLimit(self, argumentName):
         if argumentName in self.limits:
             return self.limits[argumentName]
         return None
-
 
     def _filterObjectToRepresentationFactory(self):
         theFilter = self._makeGlyphFilter()
 
         key = makeFilterKey(self.name)
         if key in _addedRepresentationFactories:
-            removeRepresentationFactory(key)
+            unregisterRepresentationFactory(Glyph, key)
         elif key not in _addedRepresentationFactories:
             _addedRepresentationFactories.append(key)
-        addRepresentationFactory(key, theFilter)
-
+        registerRepresentationFactory(Glyph, key, theFilter)
 
 
 class PenBallFilter(PenBallBaseFilter):
     """Convenience object handling glyphFilter meta/data."""
 
     _inputDataKeys = ['arguments', 'limits', 'module', 'file', 'filterObjectName', 'filterObject']
-
 
     def __init__(self, parent, filterName, filterDict):
         self._parent = parent
@@ -121,7 +97,7 @@ class PenBallFilter(PenBallBaseFilter):
         for key in self._inputDataKeys:
             if key in filterDict:
                 if key == 'arguments':
-                    entry = OrderedDict(filterDict[key])
+                    entry = dict(filterDict[key])
                 else:
                     entry = filterDict[key]
                 setattr(self, key, entry)
@@ -130,21 +106,17 @@ class PenBallFilter(PenBallBaseFilter):
         self._loadFilterObject()
         self._filterObjectToRepresentationFactory()
 
-
     def __repr__(self):
         return "('{0}', {1})".format(*self.asTuple())
 
-
     def __str__(self):
         return 'PenBallFilter {name} ({objectName})'.format(
-                name = self.name,
-                objectName = self.objectName
-            )
-
+            name=self.name,
+            objectName=self.objectName
+        )
 
     def __contains__(self, key):
         return key in self.arguments.keys()
-
 
     def __getitem__(self, key):
         if key in self.arguments:
@@ -152,32 +124,29 @@ class PenBallFilter(PenBallBaseFilter):
         else:
             raise KeyError
 
-
     def asTuple(self):
         return (self.name, self.getFilterDict())
 
-
     def getFilterDict(self):
         filterDict = {
-                    'filterObjectName': self.objectName,
-                    'arguments': [(arg, value) for arg, value in self.arguments.items()],
-                    'limits': self.limits,
-                }
+            'filterObjectName': self.objectName,
+            'arguments': [(arg, value) for arg, value in self.arguments.items()],
+            'limits': self.limits,
+        }
         source = 'module' if hasattr(self, 'module') else 'file' if hasattr(self, 'file') else None
         if source is not None:
             filterDict[source] = getattr(self, source)
         return filterDict
 
-
     def _get_privateName(self):
         return self.filterObjectName
-    objectName = property(_get_privateName, doc="Return the name of the filter object: pen or function.")
 
+    objectName = property(_get_privateName, doc="Return the name of the filter object: pen or function.")
 
     def _get_filterObject(self):
         return self.filterObject
-    object = property(_get_filterObject, doc="Return the filter object: pen or function.")
 
+    object = property(_get_filterObject, doc="Return the filter object: pen or function.")
 
     def _makeGlyphFilter(self):
         return GlyphFilter(self.object, self.arguments)
@@ -191,13 +160,11 @@ class PenBallFilter(PenBallBaseFilter):
         else:
             raise KeyError(argumentName)
 
-
     def _loadFilterObject(self):
         if hasattr(self, 'module'):
             self.filterObject = self._loadFilterFromModule(self.module, self.objectName)
         elif hasattr(self, 'file'):
             self.filterObject = self._loadFilterFromPath(self.file, self.objectName)
-
 
     def _loadFilterFromPath(self, path, functionName):
         """
@@ -212,13 +179,12 @@ class PenBallFilter(PenBallBaseFilter):
                 else:
                     module = __import__(moduleName, fromlist=[functionName])
                 result = getattr(module, functionName)
-            except:
+            except Exception:
                 result = None
             f.close()
             return result
         except IOError as e:
             print('Couldn’t load file {0}'.format(e))
-
 
     def _loadFilterFromModule(self, module, functionName):
         """
@@ -227,56 +193,46 @@ class PenBallFilter(PenBallBaseFilter):
         try:
             module = __import__(module, fromlist=[functionName])
             return getattr(module, functionName)
-        except:
+        except Exception:
             return None
-
 
 
 class PenBallFilterChain(PenBallBaseFilter):
     """A shallow filter that accumulates effects from a series of subfilters by referencing them."""
 
-
     def __init__(self, parent, filterName, subfilters=[], arguments={}):
         self._parent = parent
         self._name = filterName
-        self.arguments = OrderedDict(arguments)
+        self.arguments = dict(arguments)
         self.subfilters = []
         for subfilterName, mode, source in subfilters:
             self.setSubfilter(subfilterName, mode, source, True)
         self._filterObjectToRepresentationFactory()
 
-
     def __repr__(self):
         return '("{0}", {1}, {2})'.format(*self.asTuple())
 
-
     def __str__(self):
         return 'PenBallOperation {name} [{subfilters}])'.format(
-                name = self.name,
-                subfilters = ', '.join([str(subfilter) for subfilter in self.subfilters])
-                )
-
+            name=self.name,
+            subfilters=', '.join([str(subfilter) for subfilter in self.subfilters])
+        )
 
     def __len__(self):
         return len(self.subfilters)
 
-
     def asTuple(self):
         return (self.name, self.subfilters, self.arguments)
 
-
     def setParent(self, manager):
         self._parent = manager
-
 
     def getParent(self):
         assert self._parent is not None
         return self._parent
 
-
     def addSubfilter(self, filterName):
         self.setSubfilter(filterName, None, None)
-
 
     def removeSubfilter(self, index):
         self.subfilters.pop(index)
@@ -284,7 +240,6 @@ class PenBallFilterChain(PenBallBaseFilter):
             subfilterName, argumentName, filterOrder = self.splitSubfilterArgumentName(arg)
             if filterOrder == index:
                 self.arguments.pop(arg, 0)
-
 
     def reorderSubfilters(self, previousIndex, newIndex):
         if previousIndex < newIndex:
@@ -303,29 +258,28 @@ class PenBallFilterChain(PenBallBaseFilter):
                 changedArguments[newArg] = self.arguments[arg]
                 self.arguments.pop(arg, 0)
             elif previousIndex < filterOrder < newIndex:
-                newArg = self.joinSubfilterArgumentName(subfilterName, argumentName, filterOrder-1)
+                newArg = self.joinSubfilterArgumentName(subfilterName, argumentName, filterOrder - 1)
                 changedArguments[newArg] = self.arguments[arg]
                 self.arguments.pop(arg, 0)
             elif previousIndex > filterOrder > newIndex:
-                newArg = self.joinSubfilterArgumentName(subfilterName, argumentName, filterOrder+1)
+                newArg = self.joinSubfilterArgumentName(subfilterName, argumentName, filterOrder + 1)
                 changedArguments[newArg] = self.arguments[arg]
                 self.arguments.pop(arg, 0)
             elif filterOrder == newIndex and previousIndex < newIndex:
-                newArg = self.joinSubfilterArgumentName(subfilterName, argumentName, filterOrder-1)
+                newArg = self.joinSubfilterArgumentName(subfilterName, argumentName, filterOrder - 1)
                 changedArguments[newArg] = self.arguments[arg]
                 self.arguments.pop(arg, 0)
             elif filterOrder == newIndex and previousIndex > newIndex:
-                newArg = self.joinSubfilterArgumentName(subfilterName, argumentName, filterOrder+1)
+                newArg = self.joinSubfilterArgumentName(subfilterName, argumentName, filterOrder + 1)
                 changedArguments[newArg] = self.arguments[arg]
                 self.arguments.pop(arg, 0)
 
         for key in changedArguments:
             self.setArgumentValue(key, changedArguments[key])
 
-
     def setSubfilter(self, filterName, mode, source, keepExisting=False):
         assert self._parent is not None
-        if filterName in self._parent and self._parent.hasSubfilters(filterName) == False:
+        if filterName in self._parent and self._parent.hasSubfilters(filterName) is False:
             filterOrder = len(self)
             theFilter = self.getSubfilter(filterName)
             arguments = {self.joinSubfilterArgumentName(filterName, arg, filterOrder): value for arg, value in theFilter.arguments.items()}
@@ -333,10 +287,8 @@ class PenBallFilterChain(PenBallBaseFilter):
                 self.setArguments(arguments, keepExisting)
             self.subfilters.append((filterName, mode, source))
 
-
     def getSubfilter(self, subfilterName):
         return self._parent.getFilter(subfilterName)
-
 
     def getLimits(self, argumentName):
         subfilterName, argumentName, filterOrder = self.splitSubfilterArgumentName(argumentName)
@@ -345,10 +297,8 @@ class PenBallFilterChain(PenBallBaseFilter):
             return subfilter.getLimit(argumentName)
         return None
 
-
     def joinSubfilterArgumentName(self, subfilterName, argumentName, filterOrder):
         return '{1}{0}{2}{0}{3}'.format(FILTERARGSEPARATOR, subfilterName, argumentName, filterOrder)
-
 
     def splitSubfilterArgumentName(self, argumentName):
         try:
@@ -379,16 +329,15 @@ class PenBallFilterChain(PenBallBaseFilter):
             steps = []
 
             for i, (currentFilter, mode, source) in enumerate(subfilters):
-
-                if error == True:
+                if error is True:
                     continue
 
                 if not source:
                     sourceGlyph = canvasGlyph
                 else:
                     try:
-                        sourceGlyph = steps[source-1]
-                    except:
+                        sourceGlyph = steps[source - 1]
+                    except Exception:
                         layerGlyph = glyph.getLayer(source)
                         if len(layerGlyph) > 0:
                             sourceGlyph = RGlyph()
@@ -414,7 +363,7 @@ class PenBallFilterChain(PenBallBaseFilter):
                         b3.draw(processedPen)
                         # for component in collectedComponents:
                         #     processedGlyph.appendComponent(component.baseGlyph, component.offset, component.scale)
-                    except:
+                    except Exception:
                         error = True
 
                 steps.append(processedGlyph)
@@ -432,16 +381,15 @@ class PenBallFilterChain(PenBallBaseFilter):
                 if processedGlyph.width:
                     canvasGlyph.width = processedGlyph.width
 
-            if error == True:
+            if error is True:
                 canvasGlyph = ErrorGlyph()
-            elif error == False:
+            elif error is False:
                 cleanPen = FilterPointPen(font)
                 canvasGlyph.drawPoints(cleanPen)
                 canvasGlyph.clearContours()
                 canvasPointPen = canvasGlyph.getPointPen()
                 cleanPen.extract(canvasPointPen)
                 canvasGlyph.name = glyph.name
-
 
             canvasGlyph.unicode = glyph.unicode
             if canvasGlyph.width is None:
@@ -451,14 +399,13 @@ class PenBallFilterChain(PenBallBaseFilter):
         return filterGroup
 
 
-
 class PenBallFiltersManager(object):
     """Handling a collection of filters, the manager is in charge of retrieving/storing them"""
 
     internalFilters = {
-        'get': { 'filterObject': passThrough, },
-        'reverse': { 'filterObject': reverseContours, },
-        'removeOverlap': { 'filterObject': removeOverlap, }
+        'get': {'filterObject': passThrough, },
+        'reverse': {'filterObject': reverseContours, },
+        'removeOverlap': {'filterObject': removeOverlap, }
     }
 
     def __init__(self, filtersList=[]):
@@ -468,38 +415,30 @@ class PenBallFiltersManager(object):
             self.setFilter(key, self.internalFilters[key])
         self.loadFiltersList(filtersList)
 
-
     def __contains__(self, key):
         return key in self.filterNames or key in self.internalFilters
-
 
     def __iter__(self):
         for key in self.filterNames:
             yield self.filters[key]
 
-
     def __getitem__(self, key):
         return self.getFilter(key)
-
 
     def __repr__(self):
         return repr(self.asList())
 
-
     def keys(self):
         return [filterName for filterName in self.filterNames if filterName not in self.internalFilters]
 
-
     def asList(self):
         return [self.filters[key].asTuple() for key in self.keys()]
-
 
     def hasSubfilters(self, filterName):
         if filterName in self:
             theFilter = self.getFilter(filterName)
             return hasattr(theFilter, 'subfilters')
         return False
-
 
     def getFilter(self, key):
         if key in self.filterNames:
@@ -509,19 +448,16 @@ class PenBallFiltersManager(object):
         else:
             return self.filters['get']
 
-
     def setFilter(self, filterName, filterDict):
         if filterName not in self.filterNames and filterName not in self.internalFilters:
             self.filterNames.append(filterName)
         self.filters[filterName] = PenBallFilter(self, filterName, filterDict)
-
 
     def setFilterChain(self, filterName, subfilters, arguments={}):
         if filterName not in self.filterNames:
             self.filterNames.append(filterName)
         filterChain = PenBallFilterChain(self, filterName, subfilters, arguments)
         self.filters[filterName] = filterChain
-
 
     def updateFilterChain(self, filterName, subfilters):
         if filterName not in self.filterNames:
@@ -530,18 +466,15 @@ class PenBallFiltersManager(object):
         filterChain = PenBallFilterChain(self, filterName, subfilters, arguments)
         self.filters[filterName] = filterChain
 
-
     def removeFilter(self, filterName):
         if filterName in self.filterNames:
             self.filterNames.remove(filterName)
             self.filters.pop(filterName, 0)
 
-
     def changeFilterName(self, oldName, newName):
         index = self.filterNames.index(oldName)
         if index is not None:
             self.changeFilterNameByIndex(index, newName)
-
 
     def changeFilterNameByIndex(self, index, newName):
         if index < len(self.filterNames):
@@ -551,17 +484,14 @@ class PenBallFiltersManager(object):
             self.filters[newName] = movedFilter
             self.filters.pop(oldName, 0)
 
-
     def setFilterArguments(self, filterName, arguments, keepExisting=False):
         if filterName in self:
             theFilter = self.getFilter(filterName)
             theFilter.setArguments(arguments, keepExisting)
 
-
     def setArgumentValue(self, filterName, argumentName, argumentValue):
         theFilter = self.getFilter(filterName)
         theFilter.setArgumentValue(argumentName, argumentValue)
-
 
     def loadFiltersList(self, filtersList):
         filtersList.sort(key=lambda a: len(a))
@@ -570,15 +500,14 @@ class PenBallFiltersManager(object):
                 try:
                     filterName, filterDict = filterList
                     self.setFilter(filterName, filterDict)
-                except:
+                except Exception:
                     continue
             elif len(filterList) == 3:
                 try:
                     filterName, subfilters, arguments = filterList
                     self.setFilterChain(filterName, subfilters, arguments)
-                except:
+                except Exception:
                     continue
-
 
     def loadFiltersFromJSON(self, filePath):
         try:
@@ -598,13 +527,11 @@ class PenBallFiltersManager(object):
             f.close()
 
 
-
 if __name__ == '__main__':
 
     import unittest
-    from defcon import Glyph
     # import robofab.pens.filterPen as filterPens
-    # import 
+    # import
 
     class TestPenBallFilterManager(unittest.TestCase):
 
