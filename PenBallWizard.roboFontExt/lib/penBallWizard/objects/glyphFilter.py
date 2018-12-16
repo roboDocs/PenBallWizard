@@ -45,6 +45,8 @@ class GlyphFilter(object):
                     filteredGlyph = glyph
 
             except Exception as e:
+                import traceback
+                print(traceback.format_exc(5))
                 print('PenBallWizard — GlyphFilter: Error (function): {0}'.format(e))
                 filteredGlyph = ErrorGlyph()
         else:
@@ -56,6 +58,8 @@ class GlyphFilter(object):
                 glyph.draw(filterPen)
 
             except Exception as e:
+                import traceback
+                print(traceback.format_exc(5))
                 print('PenBallWizard — GlyphFilter: Error (pen): {0}'.format(e))
                 filteredGlyph = ErrorGlyph()
 

@@ -193,7 +193,10 @@ class PenBallFilter(PenBallBaseFilter):
         try:
             module = __import__(module, fromlist=[functionName])
             return getattr(module, functionName)
-        except Exception:
+        except Exception as e:
+            import traceback
+            print(traceback.format_exc(5))
+            print('PenBallWizard — PenBallFilter: Error loading module: {0}'.format(e))
             return None
 
 

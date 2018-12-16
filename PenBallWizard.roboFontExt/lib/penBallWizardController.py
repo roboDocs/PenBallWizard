@@ -84,6 +84,7 @@ class PenBallWizardController(object):
         self.w.displaySettings.getNSPopUpButton().setPullsDown_(True)
         self.w.displaySettings.getNSPopUpButton().setBordered_(False)
         self.w.preview = MultiLineView((300, 22, -0, -0))
+        self.updatePreview()
         displayStates = self.w.preview.getDisplayStates()
         for key in ['Show Metrics', 'Upside Down', 'Stroke', 'Beam', 'Inverse', 'Water Fall', 'Multi Line']:
             displayStates[key] = False
@@ -214,9 +215,10 @@ class PenBallWizardController(object):
                     if baseFilteredGlyph is not None:
                         font.insertGlyph(baseFilteredGlyph, baseGlyphName)
             filteredGlyph = currentFilter(glyph)
-            print(filteredGlyph)
+
             if filteredGlyph is not None:
-                font.insertGlyph(filteredGlyph, glyph.name)
+                font.newGlyph(glyph.name)
+                font[glyph.name] = filteredGlyph
                 filteredGlyphs.append(font[glyph.name])
         return filteredGlyphs
 
