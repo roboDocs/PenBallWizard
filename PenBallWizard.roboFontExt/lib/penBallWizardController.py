@@ -335,7 +335,7 @@ class PenBallWizardController(object):
             font = None
         else:
             familyName, styleName = selectedFontName.split(' > ')
-            font = AllFonts().getFontsByFamilyNameStyleName(familyName, styleName)
+            font = AllFonts().getFontsByFamilyNameStyleName(familyName, styleName)[0]
         layerName = self.generationSheet.inner.layerName.get()
         if len(layerName) == 0:
             layerName = None
