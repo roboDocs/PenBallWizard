@@ -16,15 +16,15 @@
 	<key>developer</key>
 	<string>Loïc Sander</string>
 	<key>developerURL</key>
-	<string>github.com/loicsander</string>
+	<string>http://github.com/loicsander</string>
 	<key>html</key>
-	<false/>
+	<true/>
 	<key>launchAtStartUp</key>
 	<integer>0</integer>
 	<key>mainScript</key>
 	<string></string>
 	<key>name</key>
-	<string>PenBallWizard</string>
+	<string>PenBall Wizard</string>
 	<key>requiresVersionMajor</key>
 	<string>1</string>
 	<key>requiresVersionMinor</key>
@@ -32,10 +32,12 @@
 	<key>timeStamp</key>
 	<real>1431035758.513617</real>
 	<key>version</key>
-	<string>0.69</string>
-    <key>repository</key>
-    <string>loicsander/Robofont-scripts</string>
-    <key>extensionPath</key>
-    <string>PenBallWizard.roboFontExt</string>
+	<string>0.7</string>
+	<!--
+	<key>repository</key>
+	<string>loicsander/Robofont-scripts</string>
+	-->
+	<key>extensionPath</key>
+	<string>PenBallWizard.roboFontExt</string>
 </dict>
 </plist>

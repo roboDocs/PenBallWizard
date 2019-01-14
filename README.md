@@ -7,9 +7,7 @@ This extension is a helper for the wielding of [fontPens] and functions that tra
 
 If you provide pens, they should work according to this pattern:
 
-```python
-pen = MyFilterPen(otherPen, **arguments)
-```
+    pen = MyFilterPen(otherPen, **arguments)
 
 If you want to use a pen that doesn’t receive another pen as argument, you should provide an intermediary function that handles the pen and returns a filtered glyph.
 
@@ -33,13 +31,10 @@ Filters can be defined as a succession of filters and/or boolean operations:
 
 When defining an operation, you call existing single filters by name and you have a couple of options for each filter in the process. By default, at each step, the glyph is filtered and returned to be passed to the next filter. The ```mode``` option allows you to define how the glyph is passed on to the next step.
 
-Here are the possible arguments for the mode option:
+Here are the possible arguments for the *mode* option:
 
-`add`
-: add filtered glyph on top of the existing glyph instead of filtering the existing
-
-`union`, `intersection`, `difference`
-: see [BooleanOperations]
+- `add`: add filtered glyph on top of the existing glyph instead of filtering the existing
+- `union`, `intersection`, `difference`: see [BooleanOperations]
 
 [BooleanOperations]: http://robofont.com/documentation/building-tools/toolkit/boolean-glyphmath/
 
@@ -53,29 +48,28 @@ In an operation, you don’t necessarily need to call an existing filter. If at 
 
 ## Exchanging filters between extensions
 
-Alternatively, filters can be added by other extensions inside Robofont. An extension that has a pen or filter function can add it to the filters list when a PenBallWizard window is initiated. This is done by suscribing to the `'PenBallWizardSubscribeFilter'` event. The callback dictionary will contain a method allowing you to add your filter object to PenBallWizard’s list:
+Alternatively, filters can be added by other extensions inside RoboFont. An extension that has a pen or filter function can add it to the filters list when a PenBallWizard window is initiated. This is done by suscribing to the `'PenBallWizardSubscribeFilter'` event. The callback dictionary will contain a method allowing you to add your filter object to PenBallWizard’s list:
 
-```python
-from mojo.events import addObserver
+    from mojo.events import addObserver
 
-def myFilterFunction(glyph, arg1=True, arg2=20):
-    # does stuff on a glyph
-    return filteredGlyph
+    def myFilterFunction(glyph, arg1=True, arg2=20):
+        # does stuff on a glyph
+        return filteredGlyph
 
-class MyExtension:
+    class MyExtension:
 
-    def __init__(self):
-        addObserver(self, 'addFilterToPenBallWizard', 'PenBallWizardSubscribeFilter')
+        def __init__(self):
+            addObserver(self, 'addFilterToPenBallWizard', 'PenBallWizardSubscribeFilter')
 
-    def addFilterToPenBallWizard(self, notification):
-        subscribeFilter = notification['subscribeFilter']
-        # provide a filter name
-        # and a dictionnary with the filterObject and arguments
-        subscribeFilter('MyFilter', {
-            'filterObject': myFilterFunction,
-            'arguments': {
-                'arg1': True,
-                'arg2': 20
-            }
-        })
-```
+        def addFilterToPenBallWizard(self, notification):
+            subscribeFilter = notification['subscribeFilter']
+            # provide a filter name
+            # and a dictionnary with the filterObject and arguments
+            subscribeFilter('MyFilter', {
+                'filterObject': myFilterFunction,
+                'arguments': {
+                    'arg1': True,
+                    'arg2': 20
+                }
+            })
+
