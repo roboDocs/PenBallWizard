@@ -1,0 +1,13 @@
+name: PenBall Wizard
+developer: "Loïc Sander"
+developerURL: http://github.com/loicsander
+launchAtStartUp: false
+mainScript: ''
+version: '0.7'
+addToMenu:
+- path: penBallWizardController.py
+  preferredName: PenBall Wizard
+  shortKey: ''
+html: true
+requiresVersionMajor: '1'
+requiresVersionMinor: '2'
